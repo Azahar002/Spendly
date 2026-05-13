@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-change-me"
@@ -86,42 +87,37 @@ def logout():
     return redirect(url_for("login"))
 
 
+# ------------------------------------------------------------------ #
+# Profile data helpers                                                #
+# ------------------------------------------------------------------ #
+
+def _build_user(user_id):
+    return get_user_by_id(user_id)
+
+
+def _build_stats(user_id):
+    return get_summary_stats(user_id)
+
+
+def _build_transactions(user_id):
+    return get_recent_transactions(user_id)
+
+
+def _build_categories(user_id):
+    return get_category_breakdown(user_id)
+
+
 @app.route("/profile")
 def profile():
     if not session.get("user_id"):
         return redirect(url_for("login"))
-
-    user = {
-        "name": "Alex Johnson",
-        "email": "alex@example.com",
-        "member_since": "January 2026",
-        "initials": "AJ",
-    }
-    stats = {
-        "total_spent": 264.25,
-        "tx_count": 8,
-        "top_category": "Bills",
-    }
-    transactions = [
-        {"date": "Apr 18, 2026", "description": "Grocery run",     "category": "Food",          "amount": 18.75},
-        {"date": "Apr 15, 2026", "description": "Miscellaneous",    "category": "Other",         "amount": 5.00},
-        {"date": "Apr 12, 2026", "description": "New shirt",        "category": "Shopping",      "amount": 60.00},
-        {"date": "Apr 10, 2026", "description": "Cinema tickets",   "category": "Entertainment", "amount": 20.00},
-        {"date": "Apr 08, 2026", "description": "Pharmacy",         "category": "Health",        "amount": 45.00},
-    ]
-    categories = [
-        {"name": "Bills",         "total": 95.00, "pct": 36},
-        {"name": "Shopping",      "total": 60.00, "pct": 23},
-        {"name": "Health",        "total": 45.00, "pct": 17},
-        {"name": "Food",          "total": 31.25, "pct": 12},
-        {"name": "Entertainment", "total": 20.00, "pct":  8},
-        {"name": "Transport",     "total":  8.00, "pct":  3},
-        {"name": "Other",         "total":  5.00, "pct":  2},
-    ]
+    uid = session["user_id"]
     return render_template(
         "profile.html",
-        user=user, stats=stats,
-        transactions=transactions, categories=categories,
+        user=_build_user(uid),
+        stats=_build_stats(uid),
+        transactions=_build_transactions(uid),
+        categories=_build_categories(uid),
     )
 
 

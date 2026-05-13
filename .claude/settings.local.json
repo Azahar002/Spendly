@@ -3,7 +3,14 @@
     "allow": [
       "Bash(rtk git *)",
       "Bash(rtk gain *)",
-      "Bash(rtk ls *)"
+      "Bash(rtk ls *)",
+      "Bash(git checkout *)",
+      "Bash(rtk read *)",
+      "Bash(rtk find *)",
+      "Bash(rtk tree *)",
+      "Bash(rtk grep *)",
+      "Bash(rtk pytest *)",
+      "Bash(rtk *)"
     ],
     "ask": [
       "WebSearch",
