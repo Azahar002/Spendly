@@ -19,6 +19,37 @@
       </div>
     </div>
 
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      {% if error %}
+      <p class="filter-error">{{ error }}</p>
+      {% endif %}
+      <div class="filter-presets">
+        {% for p in presets %}
+          {% if p.from %}
+            <a href="{{ url_for('profile', date_from=p.from, date_to=p.to) }}"
+               class="preset-btn{% if active_preset == p.key %} preset-btn--active{% endif %}">
+              {{ p.label }}
+            </a>
+          {% else %}
+            <a href="{{ url_for('profile') }}"
+               class="preset-btn{% if active_preset == 'all_time' %} preset-btn--active{% endif %}">
+              {{ p.label }}
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <form class="filter-custom" method="get" action="{{ url_for('profile') }}">
+        <input type="date" name="date_from" value="{{ date_from or '' }}">
+        <span class="filter-to">to</span>
+        <input type="date" name="date_to" value="{{ date_to or '' }}">
+        <button type="submit" class="btn-apply">Apply</button>
+        {% if date_from or date_to %}
+        <a href="{{ url_for('profile') }}" class="filter-clear">Clear</a>
+        {% endif %}
+      </form>
+    </div>
+
     <!-- Summary stats -->
     <div class="stats-row">
       <div class="stat-card">

@@ -1,3 +1,4 @@
+from datetime import datetime, date as _date, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email
@@ -91,20 +92,28 @@ def logout():
 # Profile data helpers                                                #
 # ------------------------------------------------------------------ #
 
+def _parse_date(val):
+    try:
+        datetime.strptime(val, '%Y-%m-%d')
+        return val
+    except (ValueError, TypeError):
+        return None
+
+
 def _build_user(user_id):
     return get_user_by_id(user_id)
 
 
-def _build_stats(user_id):
-    return get_summary_stats(user_id)
+def _build_stats(user_id, date_from=None, date_to=None):
+    return get_summary_stats(user_id, date_from=date_from, date_to=date_to)
 
 
-def _build_transactions(user_id):
-    return get_recent_transactions(user_id)
+def _build_transactions(user_id, date_from=None, date_to=None):
+    return get_recent_transactions(user_id, date_from=date_from, date_to=date_to)
 
 
-def _build_categories(user_id):
-    return get_category_breakdown(user_id)
+def _build_categories(user_id, date_from=None, date_to=None):
+    return get_category_breakdown(user_id, date_from=date_from, date_to=date_to)
 
 
 @app.route("/profile")
@@ -112,12 +121,44 @@ def profile():
     if not session.get("user_id"):
         return redirect(url_for("login"))
     uid = session["user_id"]
+
+    date_from = _parse_date(request.args.get("date_from", ""))
+    date_to   = _parse_date(request.args.get("date_to", ""))
+    error = None
+    if date_from and date_to and date_from > date_to:
+        error = "Start date must be before end date."
+        date_from = date_to = None
+
+    today          = _date.today().isoformat()
+    first_of_month = _date.today().replace(day=1).isoformat()
+    three_ago      = (_date.today() - timedelta(days=90)).isoformat()
+    six_ago        = (_date.today() - timedelta(days=180)).isoformat()
+    presets = [
+        {"key": "this_month", "label": "This Month",    "from": first_of_month, "to": today},
+        {"key": "last_3",     "label": "Last 3 Months", "from": three_ago,      "to": today},
+        {"key": "last_6",     "label": "Last 6 Months", "from": six_ago,        "to": today},
+        {"key": "all_time",   "label": "All Time",      "from": None,           "to": None},
+    ]
+
+    active_preset = "all_time"
+    if date_from or date_to:
+        active_preset = "custom"
+        for p in presets:
+            if date_from == p["from"] and date_to == p["to"]:
+                active_preset = p["key"]
+                break
+
     return render_template(
         "profile.html",
         user=_build_user(uid),
-        stats=_build_stats(uid),
-        transactions=_build_transactions(uid),
-        categories=_build_categories(uid),
+        stats=_build_stats(uid, date_from=date_from, date_to=date_to),
+        transactions=_build_transactions(uid, date_from=date_from, date_to=date_to),
+        categories=_build_categories(uid, date_from=date_from, date_to=date_to),
+        date_from=date_from,
+        date_to=date_to,
+        presets=presets,
+        active_preset=active_preset,
+        error=error,
     )
 
 
