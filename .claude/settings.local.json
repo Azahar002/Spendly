@@ -10,7 +10,9 @@
       "Bash(rtk tree *)",
       "Bash(rtk grep *)",
       "Bash(rtk pytest *)",
-      "Bash(rtk *)"
+      "Bash(rtk *)",
+      "mcp__sqlite__list_tables",
+      "mcp__sqlite__read_query"
     ],
     "ask": [
       "WebSearch",
